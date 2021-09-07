@@ -1,6 +1,9 @@
+from datetime import date
+
+
 class Empresa:
     aumentoId = 1
-    def __init__(self, departamen, emplea, direcci, telefo, razonSo, ruc):
+    def __init__(self, departamen="", emplea="", direcci="", telefo="", razonSo="", ruc=""):
         self.__id = Empresa.aumentoId
         self.departamento = departamen
         self.empleado = emplea
@@ -25,7 +28,7 @@ class Empresa:
 
 class Empleado:
     aumentoId = 1
-    def __init__(self, nomb, suel, fechaIn):
+    def __init__(self, nomb="", suel="", fechaIn=0):
         self.__id = Empleado.aumentoId
         self.nombre = nomb
         self.sueldo = suel
@@ -46,7 +49,7 @@ class Empleado:
 
 class Administrativo(Empleado):
     aumentoId = 1
-    def __init__(self, nomb, suel, fechaIn, comisi):
+    def __init__(self, nomb="", suel="", fechaIn=0, comisi=False):
         super().__init__(nomb, suel, fechaIn)
         self.__id = Administrativo.aumentoId
         self.comision = comisi
@@ -64,7 +67,7 @@ class Administrativo(Empleado):
 
 class Obrero(Empleado):
     aumentoId = 1
-    def __init__(self, nomb, suel, fechaIn, sindica, contratoCo):
+    def __init__(self, nomb="", suel=0, fechaIn=0, sindica=False, contratoCo=False):
         super().__init__(nomb, suel, fechaIn)
         self.__id = Obrero.aumentoId
         self.sindicato = sindica
@@ -84,7 +87,7 @@ class Obrero(Empleado):
 
 class Departamento:
     aumentoId = 1
-    def __init__(self, emplea, descripci):
+    def __init__(self, emplea="", descripci=""):
         self.__id = Departamento.aumentoId
         self.empleado = emplea
         self.descripcion = descripci
@@ -102,7 +105,7 @@ class Departamento:
 
 class Sobretiempo:
     aumentoId = 1
-    def __init__(self, horasRe, horasEx, emplea, fec, esta):
+    def __init__(self, horasRe=0, horasEx=0, emplea="", fec="", esta=False):
         self.__id = Sobretiempo.aumentoId
         self.horasRecargo = horasRe
         self.horasExtraordinarias = horasEx
@@ -110,6 +113,10 @@ class Sobretiempo:
         self.fecha = fec
         self.estado = esta
         Sobretiempo.aumentoId = Sobretiempo.aumentoId + 1
+    
+    def totSobretiempo(self, sueldo=0, horasRec=0, horasExt=0):
+        valor_hora = sueldo/240
+        return round((valor_hora*(horasRec*0.50+horasExt*2)), 2)
     
     def mostrarSobretiempo(self):
         print("*CLASE SOBRETIEMPO*")
@@ -126,17 +133,17 @@ class Sobretiempo:
 
 class Prestamos:
     aumentoId = 1
-    def __init__(self, fec, valo, numeroPa, cuo, emplea, esta):
+    def __init__(self, fec="", valo=0, numeroPa=0, emplea="", esta=False):
         self.__id = Prestamos.aumentoId
         self.fecha = fec
         self.valor = valo
         self.numPagos = numeroPa
-        self.cuota = cuo
+        self.cuota = round((self.valor / self.numPagos), 2)
         self.empleado = emplea
-        self.saldo = self.numPagos * self.valor
+        self.saldo = round((self.cuota * self.numPagos), 2)
         self.estado = esta
         Prestamos.aumentoId = Prestamos.aumentoId + 1
-    
+
     def mostrarPrestamos(self):
         print("*CLASE PRESTAMOS*")
         print("id:", self.__id)
@@ -154,13 +161,13 @@ class Prestamos:
 
 class Deducciones:
     aumentoId = 1
-    def __init__(self, iess, comisi, antigued):
+    def __init__(self, iess=0, comisi=0, antigued=0):
         self.__id = Deducciones.aumentoId
         self.iess = iess
         self.comision = comisi
         self.antiguedad = antigued
         Deducciones.aumentoId = Deducciones.aumentoId + 1
-    
+
     def mostrarDeducciones(self):
         print("*CLASE DEDUCCIONES*")
         print("id:", self.__id)
@@ -175,19 +182,25 @@ class Deducciones:
 
 class Nomina:
     aumentoId = 1
-    def __init__(self, emplea, fec, sobretiem, comisi, antigued, iess, presta):
+    def __init__(self, emplea="", fec=0, sobretiem="", comisi=0, antigued=0, iess=0, presta=""):
         self.__id = Nomina.aumentoId
         self.empleado = emplea
         self.fecha = fec
         self.sueldo = emplea.sueldo
         self.sobretiempo = sobretiem
-        self.comision = comisi
-        self.antiguedad = antigued
-        self.totIng = self.sueldo + self.antiguedad + self.sobretiempo.horasRecargo + self.sobretiempo.horasExtraordinarias
-        self.iess = self.sueldo * iess
+        self.totSobret = self.sobretiempo.totSobretiempo(self.sueldo, self.sobretiempo.horasRecargo, self.sobretiempo.horasExtraordinarias)
+        self.comision = round((comisi * self.sueldo), 2)
+        numeroDias = (self.fecha-self.empleado.fechaIngreso).days
+        numeroDias = int(numeroDias)
+        self.antiguedad = antigued*numeroDias/365*self.sueldo
+        self.antiguedad = round(self.antiguedad, 2)
+        self.iess = iess*(self.sueldo+self.totSobret)
         self.iess = round(self.iess, 2)
         self.prestamo = presta
-        self.totDes = self.comision + self.iess + self.prestamo.valor
+        self.prestamoEmpleado = self.prestamo.cuota
+        self.totIng = self.sueldo+self.totSobret+self.comision+self.antiguedad
+        self.totIng = round(self.totIng, 2)
+        self.totDes = self.iess+self.prestamoEmpleado
         self.totDes = round(self.totDes, 2)
         self.liquidoRecibir = self.totIng - self.totDes
         self.liquidoRecibir = round(self.liquidoRecibir, 2)
@@ -210,20 +223,36 @@ class Nomina:
         return self.__id
 
 
+# PARA EL INGRESO DE FECHA HACERLO COMO ESTE MODELO -> (AÑO/MES/DIA) -> 2018/12/30
+
+direccion = input("Direccion de la empresa: ")
+telefono = input("Telefono de la empresa: ")
+razonSocial = input("Razón Social de la empresa: ")
+ruc = input("Ruc de la empresa: ")
+
 nombre = input("Nombre del empleado: ")
 sueldo = float(input("Sueldo del empleado: "))
-fechaIngreso = input("Fecha de ingreso del empleado: ")
+fechaIngresoNoDate = input("Fecha de ingreso del empleado: ").split("/")
+año, mes, dia = int(fechaIngresoNoDate[0]), int(fechaIngresoNoDate[1]), int(fechaIngresoNoDate[2])
+fechaIngreso = date(año, mes, dia)
 
 empleadoTipo = int(input("Empleado [1]administrativo, [2]obrero: "))
 if empleadoTipo == 1:
+    antiguedad = 0
     comision = int(input("El empleado está sujeto a comisiones [1]si, [2]no: "))
     if comision == 1:
+        cobrarComision = float(input("Comision a recargar: ")) / 100
+        cobrarComision = round(cobrarComision, 2)
         empleado = Administrativo(nombre, sueldo, fechaIngreso, True)
     else:
+        cobrarComision = 0
         empleado = Administrativo(nombre, sueldo, fechaIngreso, False)
 else:
-    sindicato = int(input("El empleado pertenece a un sindicato [1]si, [2]no: "))
-    contratoColectivo = int(input("El empleado pertenece a algún contrato colectivo [1]si, [2]no: "))
+    cobrarComision = 0
+    sindicato = int(input("El empleado pertenece a algún sindicato [1]si, [2]no: "))
+    contratoColectivo = int(input("El empleado tiene algún contrato colectivo [1]si, [2]no: "))
+    antiguedad = float(input("Cargo por antiguedad: "))/100
+    antiguedad = round(antiguedad, 2)
     if sindicato == 1:
         if contratoColectivo == 1:
             empleado = Obrero(nombre, sueldo, fechaIngreso, True, True)
@@ -237,33 +266,31 @@ else:
 
 descripcionDepartamento = input("Descripción del departamento: ")
 
-direccion = input("Direccion de la empresa: ")
-telefono = input("Telefono de la empresa: ")
-razonSocial = input("Razón Social de la empresa: ")
-ruc = input("Ruc de la empresa: ")
-
 realizaPrestamo = int(input("El empleado realizó un prestamo [1]si, [2]no: "))
 if realizaPrestamo == 1:
     #Realizo prestamo
-    fechaPrestamo = input("Fecha del prestamo: ")
-    valorPrestamo = float(input("Cuota a cancelar: "))
-    numeroPagos = int(input("Numero de pagos restantes: "))
-    cuota = float(input("Cuota establecida: "))
-    if (numeroPagos * valorPrestamo) != 0:
+    fechaPrestamoNoDate = input("Fecha del prestamo: ").split("/")
+    año, mes, dia = int(fechaPrestamoNoDate[0]), int(fechaPrestamoNoDate[1]), int(fechaPrestamoNoDate[2])
+    fechaPrestamo = date(año, mes, dia)
+    valor = float(input("Valor Prestamo: "))
+    numeroPagos = int(input("Numero de pagos: "))
+    if numeroPagos > 0:
         estadoPres = True
     else:
         estadoPres = False
-    prestamos = Prestamos(fechaPrestamo, valorPrestamo, numeroPagos, cuota, empleado, estadoPres)
+    prestamos = Prestamos(fechaPrestamo, valor, numeroPagos, empleado, estadoPres)
 else:
     #No realizo prestamo
-    prestamos = Prestamos("", 0, 0, 0, empleado, False)
+    prestamos = Prestamos("", 0, 0, empleado, False)
 
 realizaSobretiempo = int(input("El empleado realizó sobretiempo [1]si, [2]no: "))
 if realizaSobretiempo == 1:
     #Realizo sobretiempo
-    horasRecargo = float(input("Horas recargo: "))
-    horasExtraordinarias = float(input("Horas Extraordinarias: "))
-    fechaSobretiempo = input("Fecha Sobretiempo: ")
+    horasRecargo = int(input("Horas recargo: "))
+    horasExtraordinarias = int(input("Horas Extraordinarias: "))
+    fechaSobretiempoNoDate = input("Fecha Sobretiempo: ").split("/")
+    año, mes, dia = int(fechaSobretiempoNoDate[0]), int(fechaSobretiempoNoDate[1]), int(fechaSobretiempoNoDate[2])
+    fechaSobretiempo = date(año, mes, dia)
     if horasRecargo != 0 or horasExtraordinarias != 0:
         estadoSobret = True
     else:
@@ -273,17 +300,13 @@ else:
     #No realizo sobretiempo
     sobretiempo = Sobretiempo(0, 0, empleado, "", False)
 
-porcentajeIess = float(input("Porcentaje a cobrar del sueldo para el iess: "))
+porcentajeIess = float(input("Porcentaje a cobrar del sueldo para el iess: "))/100
+porcentajeIess = round(porcentajeIess, 4)
 realizoComision = isinstance(empleado, Administrativo)
-if realizoComision:
-    #True
-    cobrarComision = float(input("Comision a recargar: "))
-else:
-    #False > Obrero
-    cobrarComision = 0
-antiguedad = float(input("Cargo por antiguedad: "))
 
-fechaNomina = input("Fecha de emisión de la nomina: ")
+fechaNominaNoDate = input("Fecha de emisión de la nomina: ").split("/")
+año, mes, dia = int(fechaNominaNoDate[0]), int(fechaNominaNoDate[1]), int(fechaNominaNoDate[2])
+fechaNomina = date(año, mes, dia)
 
 empresa = Empresa(Departamento(empleado, descripcionDepartamento), empleado, direccion, telefono, razonSocial, ruc)
 deducciones = Deducciones(porcentajeIess, cobrarComision, antiguedad)
@@ -292,20 +315,14 @@ nomina = Nomina(empleado, fechaNomina, sobretiempo, deducciones.comision, deducc
 
 print("")
 empresa.mostrarEmpresa()
-print("")
 empleado.mostrarEmpleado()
-print("")
 if isinstance(empleado, Administrativo):
     empleado.mostrarAdministrativo()
 else:
     empleado.mostrarObrero()
-print("")
 empresa.departamento.mostrarDepartamento()
-print("")
 prestamos.mostrarPrestamos()
-print("")
 sobretiempo.mostrarSobretiempo()
-print("")
 deducciones.mostrarDeducciones()
 print("")
 nomina.mostrarNomina()
